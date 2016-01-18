@@ -1,0 +1,122 @@
+#include "lpc17xx_gpio.h"
+#include "lpc17xx_systick.h"
+
+//global variables
+uint32_t led1 = 1<<18;
+uint32_t led2 = 1<<20;
+uint32_t led3 = 1<<21;
+uint32_t led4 = 1<<23;
+
+volatile uint32_t SysTickCount = 0;
+
+void delay(unsigned int msec)
+{
+        int n;
+        for(n = 0; n <= 5000*msec; n++)
+        {}
+
+}
+
+void blinky(void)
+{
+        uint32_t led1 = 1<<18;
+        uint32_t led2 = 1<<20;
+        uint32_t led3 = 1<<21;
+        uint32_t led4 = 1<<23;
+
+        GPIO_SetDir(1,led1,1);
+        GPIO_SetDir(1,led2,1);
+        GPIO_SetDir(1,led3,1);
+        GPIO_SetDir(1,led4,1);
+        for(;;)
+{
+        GPIO_SetValue(1,led1);
+        delay(1000);
+        GPIO_ClearValue(1, led1);
+        GPIO_SetValue(1,led2);
+        delay(1000);
+        GPIO_ClearValue(1, led2);
+        GPIO_SetValue(1,led3);
+        delay(1000);
+        GPIO_ClearValue(1, led3);
+        GPIO_SetValue(1,led4);
+        delay(1000);
+        GPIO_ClearValue(1, led4);
+}
+} 
+     
+
+void SysTick_Handler(void) {
+	SysTickCount++;		 
+}
+
+inline static void interrupt(uint32_t delayTime) //delaytime in millesecs
+{
+	while (SysTickCount < delayTime){
+        }
+        SysTickCount = 0;
+}
+
+
+
+void interrupt_config_(void){
+        int systemcoreclock = 100000000 ; // LPC1768 microprocessers' clock = 100MHZ
+         GPIO_SetDir(1,led1,1);
+         GPIO_SetDir(1,led2,1);
+         GPIO_SetDir(1,led3,1);
+         GPIO_SetDir(1,led4,1);
+
+         //SYSTICK SETUP
+         SYSTICK_Cmd(ENABLE);
+         SYSTICK_IntCmd(ENABLE);
+         SysTick_Config(systemcoreclock / 1000) ; 
+       
+}
+  
+void denToBin(unsigned int num)
+{       
+        GPIO_SetDir(1,led1,1);
+        GPIO_SetDir(1,led2,1);
+        GPIO_SetDir(1,led3,1);
+        GPIO_SetDir(1,led4,1);
+        int n = 0;
+        unsigned int array[4] = {8,4,2,1};
+        for (n ; n < 4 ; n++)
+        {
+        if (array[n] <= num)
+                {
+                num -= array[n];
+                array[n] = 1;
+                }
+        else
+                { 
+                array[n] = 0;
+                }
+        }
+        GPIO_SetValue(array[0],led1);
+        GPIO_SetValue(array[1],led2);
+        GPIO_SetValue(array[2],led3);
+        GPIO_SetValue(array[3],led4);
+        interrupt(1000);
+        GPIO_ClearValue(1, led1);
+        GPIO_ClearValue(1, led2);
+        GPIO_ClearValue(1, led3);
+        GPIO_ClearValue(1, led4);
+        
+}      
+
+void NumberCycle(void) {
+        int i;
+        for(i = 0; i < 16; i++){
+                denToBin(i);
+        
+        }
+}
+
+int main(void){
+        interrupt_config_();
+        //blinky();   
+        NumberCycle();           
+        
+        
+}
