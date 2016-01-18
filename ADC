@@ -1,0 +1,111 @@
+#include "lpc17xx_i2c.h"
+#include "lpc17xx_pinsel.h"
+#include "lpc17xx_uart.h"
+#include "lpc_types.h"
+#include "lpc17xx_adc.h"
+#include "lpc17xx_dac.h"
+#include "lpc17xx_gpdma.h"
+
+#define DMA_SIZE 60
+#define NUM_SINE_SAMPLE 60
+#define SINE_FREQ_IN_HZ 60
+#define PCLK_DAC_IN_MHZ 25 //CCLK divided by 4
+
+GPDMA_Channel_CFG_Type GPDMACfg;
+
+void delay(unsigned int msec)
+{
+        int n;
+        for(n = 0; n <= 5000*msec; n++)
+        {}
+
+}
+
+void send_message(char *message, int length){
+        UART_Send((LPC_UART_TypeDef *) LPC_UART0, (uint8_t *)message, length, BLOCKING); 
+
+}
+
+void printsetup(void){
+        UART_CFG_Type UARTConfigStruct;            // UART Configuration structure variable
+    UART_FIFO_CFG_Type UARTFIFOConfigStruct;    // UART FIFO configuration Struct variable
+    PINSEL_CFG_Type PinCfg;                // Pin configuration for UART
+       
+        PinCfg.OpenDrain = 0;
+        PinCfg.Pinmode = 0;
+        PinCfg.Funcnum = 1;  
+        PinCfg.Portnum = 0;
+        PinCfg.Pinnum = 2;
+        PINSEL_ConfigPin(&PinCfg);
+        PinCfg.Pinnum = 3;
+        PINSEL_ConfigPin(&PinCfg);
+
+        UART_ConfigStructInit(&UARTConfigStruct);     
+
+        UART_FIFOConfigStructInit(&UARTFIFOConfigStruct);
+
+        UART_Init((LPC_UART_TypeDef *) LPC_UART0, &UARTConfigStruct);
+
+        UART_TxCmd((LPC_UART_TypeDef *) LPC_UART0, ENABLE);
+}
+
+void DACsinewave(float amplitude, unsigned int frequency){
+        PINSEL_CFG_Type PinCfg;
+        DAC_CONVERTER_CFG_Type DAC_ConverterConfigStruct;
+        
+        uint16_t dac_value = 0;
+        int x = 0;
+        float y = 0;
+        
+        PinCfg.OpenDrain = 0;
+        PinCfg.Pinmode = 0;
+        PinCfg.Funcnum = 2;  
+        PinCfg.Portnum = 0;
+        PinCfg.Pinnum = 26;
+        PINSEL_ConfigPin(&PinCfg);
+
+        DAC_Init(LPC_DAC, 100);
+        DAC_ConfigDAConverterControl(LPC_DAC, DAC_Converter_CFG_Type);     
+        
+}
+
+
+
+
+void ADCsetup(uint8_t channel){
+        PINSEL_CFG_Type PinCfg;
+       
+        PinCfg.OpenDrain = 0;
+        PinCfg.Pinmode = 0;
+        PinCfg.Funcnum = 3;  
+        PinCfg.Portnum = 1;
+        PinCfg.Pinnum = 30;
+        PINSEL_ConfigPin(&PinCfg);
+
+        ADC_Init(LPC_ADC, 100);
+        ADC_ChannelCmd(LPC_ADC, channel, ENABLE);
+        ADC_StartCmd(LPC_ADC, ADC_START_CONTINUOUS);
+        //ADC_BurstCmd(LPC_ADC,ENABLE);
+        }
+
+void ADCread(uint8_t channel){
+
+        while(1){
+        
+        float voltage = ADC_ChannelGetData(LPC_ADC, channel);
+        char message[20];
+        sprintf(message, "ADC voltage: %f \n\r", voltage);
+        send_message(message, strlen(message));
+        delay(1000);
+
+        }        
+}
+
+        
+void main(void){
+        /*int channel = 4;
+        printsetup();       
+        ADCsetup(channel);
+        ADCread(channel);*/
+        DACsinewave();
+        }
