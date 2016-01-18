@@ -1,0 +1,39 @@
+#include "lpc17xx_uart.h"		
+#include "lpc17xx_pinsel.h"
+#include "lpc_types.h"
+#include "serial.h"
+
+int main(void){
+        char message[] = "Hello World!\n\r";
+        setup(); 
+        send_message(message, strlen(message));
+        while(1);
+}
+
+int send_message(char *message, int length){
+        return(UART_Send((LPC_UART_TypeDef *) LPC_UART0, (uint8_t *)message, length, BLOCKING));  
+
+}
+
+void setup(void){
+        UART_CFG_Type UARTConfigStruct;			// UART Configuration structure variable
+	UART_FIFO_CFG_Type UARTFIFOConfigStruct;	// UART FIFO configuration Struct variable
+	PINSEL_CFG_Type PinCfg;				// Pin configuration for UART
+        
+        PinCfg.OpenDrain = 0;
+        PinCfg.Pinmode = 0;
+        PinCfg.Funcnum = 1;   
+        PinCfg.Portnum = 0;
+        PinCfg.Pinnum = 2;
+        PINSEL_ConfigPin(&PinCfg);
+        PinCfg.Pinnum = 3;
+        PINSEL_ConfigPin(&PinCfg);
+
+        UART_ConfigStructInit(&UARTConfigStruct);      
+
+        UART_FIFOConfigStructInit(&UARTFIFOConfigStruct);
+
+        UART_Init((LPC_UART_TypeDef *) LPC_UART0, &UARTConfigStruct);
+
+        UART_TxCmd((LPC_UART_TypeDef *) LPC_UART0, ENABLE);
+}
